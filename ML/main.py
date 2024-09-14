@@ -6,7 +6,7 @@ import os
 load_dotenv("configs/.env")
 
 # Initialize FastAPI app
-app = FastAPI(
+app = FastAPI()
 
 
 @app.get("/")
