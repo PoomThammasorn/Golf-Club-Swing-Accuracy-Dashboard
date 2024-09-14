@@ -17,4 +17,4 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 9000))
-    uvicorn.run(app,  port=port)
+    uvicorn.run(app,  port=port
