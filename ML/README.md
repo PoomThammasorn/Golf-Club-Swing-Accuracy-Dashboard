@@ -20,18 +20,18 @@ This is a simple FastAPI application that returns a "Hello World" message. It lo
 2. **Create virtual environment**:
 
    ```bash
-   python -m venv venv
+   python -m venv .venv
    ```
 
 3. **Activate virtual environment**:
 
    - Windows:
      ```cmd
-     venv\Scripts\activate
+     .venv\Scripts\activate
      ```
    - macOS/Linux:
      ```bash
-     source venv/bin/activate
+     source .venv/bin/activate
      ```
 
 4. **Install dependencies**:
