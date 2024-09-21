@@ -1,4 +1,4 @@
-import paho.mqtt.client as mqtt  # type: ignore
+import paho.mqtt.client as mqtt 
 import json
 import random
 import time
