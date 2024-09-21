@@ -6,23 +6,20 @@ import os
 from dotenv import load_dotenv
 
 
-def load_environment_variables():
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(BASE_DIR, "../.."))
-    load_dotenv(os.path.join(project_root, "IoT/mqtt/configs/.env"))
-
-
 def generate_sensor_data():
     return {
-        'accelerometer': {
-            'x': round(random.uniform(-10, 10), 2),
-            'y': round(random.uniform(-10, 10), 2),
-            'z': round(random.uniform(-10, 10), 2)
-        },
-        'gyroscope': {
-            'x': round(random.uniform(0, 360), 2),
-            'y': round(random.uniform(0, 360), 2),
-            'z': round(random.uniform(0, 360), 2)
+        'data':
+        {
+            'accelerometer': {
+                'x': round(random.uniform(-10, 10), 2),
+                'y': round(random.uniform(-10, 10), 2),
+                'z': round(random.uniform(-10, 10), 2)
+            },
+            'gyroscope': {
+                'x': round(random.uniform(0, 360), 2),
+                'y': round(random.uniform(0, 360), 2),
+                'z': round(random.uniform(0, 360), 2)
+            }
         }
     }
 
@@ -43,7 +40,7 @@ def publish_sensor_data(client, topic, data):
 
 
 def run_sensor_publisher():
-    load_environment_variables()
+    load_dotenv("./configs/.env")
     client = setup_mqtt_client()
     topic_sensor = os.getenv("MQTT_SENSORS_TOPIC", "sensors/data")
 
@@ -54,7 +51,7 @@ def run_sensor_publisher():
         while True:
             sensor_data = generate_sensor_data()
             publish_sensor_data(client, topic_sensor, sensor_data)
-            time.sleep(1)  # Delay between each data publish
+            time.sleep(0.01)
     except KeyboardInterrupt:
         print("Stopping sensor data publisher...")
     finally:

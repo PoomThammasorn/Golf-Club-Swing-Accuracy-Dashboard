@@ -6,17 +6,8 @@ import threading
 import paho.mqtt.client as mqtt
 from dotenv import load_dotenv
 
-# Global variable to store the last received image
-global last_frame
-
-
-def load_environment_variables():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(base_dir, ".."))
-
-    # Load MQTT and ML configuration files
-    load_dotenv(os.path.join(project_root, "configs/mqtt.env"))
-    load_dotenv(os.path.join(project_root, "ML/configs/.env"))
+# Initialize last_frame to None
+last_frame = None
 
 
 def on_message(client, userdata, message):
@@ -72,9 +63,8 @@ def show_video():
 
 
 def main():
-    last_frame = None
     # Load environment variables
-    load_environment_variables()
+    load_dotenv("./configs/.env")
 
     # Start the MQTT client in a separate thread
     start_mqtt_thread()

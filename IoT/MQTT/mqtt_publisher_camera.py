@@ -3,12 +3,7 @@ import paho.mqtt.client as mqtt
 import base64
 from dotenv import load_dotenv
 import os
-
-
-def load_environment_variables():
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(BASE_DIR, "../.."))
-    load_dotenv(os.path.join(project_root, "IoT/mqtt/configs/.env"))
+import time
 
 
 def get_rtsp_url():
@@ -29,38 +24,40 @@ def initialize_mqtt_client():
 
 
 def publish_frames_to_mqtt(client, mqtt_topic, rtsp_url):
-    cap = cv2.VideoCapture(rtsp_url)
+    while True:
+        cap = cv2.VideoCapture(rtsp_url)
 
-    if not cap.isOpened():
-        print("Error: Could not open video stream.")
-        return
+        if not cap.isOpened():
+            print("Error: Could not open video stream. Retrying...")
+            time.sleep(5)  # Wait before retrying
+            continue  # Retry connection
 
-    try:
-        while True:
-            ret, frame = cap.read()
+        try:
+            while True:
+                ret, frame = cap.read()
 
-            if not ret:
-                print("Error: Could not read frame.")
-                break
+                if not ret:
+                    print("Error: Could not read frame. Reconnecting...")
+                    break  # Break to reconnect
 
-            # Encode the frame to JPEG format and convert to base64
-            _, buffer = cv2.imencode('.jpg', frame)
-            jpg_as_text = base64.b64encode(buffer)
+                # Encode the frame to JPEG format and convert to base64
+                _, buffer = cv2.imencode('.jpg', frame)
+                jpg_as_text = base64.b64encode(buffer)
 
-            # Publish the frame to the MQTT topic
-            client.publish(mqtt_topic, jpg_as_text)
-            print(f"Published frame to {mqtt_topic}")
+                # Publish the frame to the MQTT topic
+                client.publish(mqtt_topic, jpg_as_text)
+                print(f"Published frame to {mqtt_topic}")
 
-    except KeyboardInterrupt:
-        print("Interrupted by user.")
-    finally:
-        # Release resources
-        cap.release()
-        cv2.destroyAllWindows()
+        except KeyboardInterrupt:
+            print("Interrupted by user.")
+            break
+        finally:
+            cap.release()
+            print("Released video capture. Reconnecting...")
 
 
 def main():
-    load_environment_variables()
+    load_dotenv("./configs/.env")
 
     mqtt_client = initialize_mqtt_client()
     mqtt_topic = os.getenv("MQTT_CAMERA_TOPIC", "camera/data")

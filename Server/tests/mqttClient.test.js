@@ -32,7 +32,7 @@ describe("connectToMQTT", () => {
 		connectToMQTT(url, port, topic, messageHandler);
 
 		// Assert mqtt.connect was called with the correct URL and port
-		expect(mqtt.connect).toHaveBeenCalledWith(url, { port });
+		expect(mqtt.connect).toHaveBeenCalledWith(`mqtt://${url}:${port}`);
 	});
 
 	it("should subscribe to the topic after connecting", () => {
