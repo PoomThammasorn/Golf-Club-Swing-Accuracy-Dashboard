@@ -15,7 +15,7 @@ last_message = None
 
 # Define the MQTT broker address and topic
 broker_address = "localhost"
-topic = "sensor/data"
+topic = "camera/data"
 
 # Callback function when a message is received
 
