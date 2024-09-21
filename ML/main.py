@@ -2,8 +2,11 @@ from fastapi import FastAPI
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from .env file
-load_dotenv("configs/.env")
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(base_dir, ".."))
+load_dotenv(os.path.join(project_root, "ML/configs/.env"))
+
 
 # Initialize FastAPI app
 app = FastAPI()

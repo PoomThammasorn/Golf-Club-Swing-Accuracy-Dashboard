@@ -23,24 +23,26 @@ describe("connectToMQTT", () => {
 	});
 
 	it("should connect to the MQTT broker", () => {
-		const url = "mqtt://test-url";
+		const url = "test-url";
+		const port = 1883;
 		const topic = "test/topic";
 		const messageHandler = jest.fn();
 
 		// Call the function
-		connectToMQTT(url, topic, messageHandler);
+		connectToMQTT(url, port, topic, messageHandler);
 
-		// Assert mqtt.connect was called with the correct URL
-		expect(mqtt.connect).toHaveBeenCalledWith(url);
+		// Assert mqtt.connect was called with the correct URL and port
+		expect(mqtt.connect).toHaveBeenCalledWith(url, { port });
 	});
 
 	it("should subscribe to the topic after connecting", () => {
-		const url = "mqtt://test-url";
+		const url = "test-url";
+		const port = 1883;
 		const topic = "test/topic";
 		const messageHandler = jest.fn();
 
 		// Call the function
-		connectToMQTT(url, topic, messageHandler);
+		connectToMQTT(url, port, topic, messageHandler);
 
 		// Simulate the 'connect' event
 		const connectCallback = mockClient.on.mock.calls.find(
@@ -56,12 +58,13 @@ describe("connectToMQTT", () => {
 	});
 
 	it("should handle incoming messages", () => {
-		const url = "mqtt://test-url";
+		const url = "test-url";
+		const port = 1883;
 		const topic = "test/topic";
 		const messageHandler = jest.fn();
 
 		// Call the function
-		connectToMQTT(url, topic, messageHandler);
+		connectToMQTT(url, port, topic, messageHandler);
 
 		// Simulate the 'message' event
 		const messageCallback = mockClient.on.mock.calls.find(
