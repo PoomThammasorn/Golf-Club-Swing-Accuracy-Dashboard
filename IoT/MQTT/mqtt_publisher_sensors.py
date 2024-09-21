@@ -1,55 +1,66 @@
-import paho.mqtt.client as mqtt 
+import paho.mqtt.client as mqtt
 import json
 import random
 import time
+import os
+from dotenv import load_dotenv
 
-# Function to generate random sensor data for accelerometer and gyroscope
+
+def load_environment_variables():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(BASE_DIR, "../.."))
+    load_dotenv(os.path.join(project_root, "IoT/mqtt/configs/.env"))
 
 
-def get_sensor_data():
-    accelerometer = {
-        'x': round(random.uniform(-10, 10), 2),
-        'y': round(random.uniform(-10, 10), 2),
-        'z': round(random.uniform(-10, 10), 2)
-    }
-    gyroscope = {
-        'x': round(random.uniform(0, 360), 2),
-        'y': round(random.uniform(0, 360), 2),
-        'z': round(random.uniform(0, 360), 2)
-    }
+def generate_sensor_data():
     return {
-        'accelerometer': accelerometer,
-        'gyroscope': gyroscope
+        'accelerometer': {
+            'x': round(random.uniform(-10, 10), 2),
+            'y': round(random.uniform(-10, 10), 2),
+            'z': round(random.uniform(-10, 10), 2)
+        },
+        'gyroscope': {
+            'x': round(random.uniform(0, 360), 2),
+            'y': round(random.uniform(0, 360), 2),
+            'z': round(random.uniform(0, 360), 2)
+        }
     }
 
 
-# Define the MQTT broker address and topics
-broker_address = "localhost"
-topic_sensor = "sensor/data"
+def setup_mqtt_client():
+    broker_address = os.getenv("MQTT_URL", "localhost")
+    broker_port = int(os.getenv("MQTT_PORT", 1883))
 
-# Create a new MQTT client instance
-client = mqtt.Client()
+    client = mqtt.Client()
+    client.connect(broker_address, broker_port, 60)
+    return client
 
-# Connect to the MQTT broker
-client.connect(broker_address)
 
-# Start the loop to process callbacks
-client.loop_start()
+def publish_sensor_data(client, topic, data):
+    payload = json.dumps(data)
+    client.publish(topic, payload)
+    print(f"Published to {topic}: {data}")
 
-try:
-    while True:
-        # Generate sensor data
-        sensor_data = get_sensor_data()
 
-        # Publish the data to the respective MQTT topics
-        client.publish(topic_sensor, json.dumps(sensor_data))
+def run_sensor_publisher():
+    load_environment_variables()
+    client = setup_mqtt_client()
+    topic_sensor = os.getenv("MQTT_SENSORS_TOPIC", "sensors/data")
 
-        print(f"Published to {topic_sensor}: {sensor_data}")
-        # Wait for 1 second before sending the next data
-        time.sleep(1)
+    # Start MQTT loop for handling communication
+    client.loop_start()
 
-except KeyboardInterrupt:
-    # Stop the loop and disconnect on interrupt
-    print("Stopping sensor data publisher...")
-    client.loop_stop()
-    client.disconnect()
+    try:
+        while True:
+            sensor_data = generate_sensor_data()
+            publish_sensor_data(client, topic_sensor, sensor_data)
+            time.sleep(1)  # Delay between each data publish
+    except KeyboardInterrupt:
+        print("Stopping sensor data publisher...")
+    finally:
+        client.loop_stop()
+        client.disconnect()
+
+
+if __name__ == "__main__":
+    run_sensor_publisher()
