@@ -1,42 +1,51 @@
-import paho.mqtt.client as mqtt
 import cv2
-import json
-import time
+import paho.mqtt.client as mqtt
+import base64
 
-# Define MQTT broker address and topic
-broker_address = "localhost"
-topic_camera = "camera/data"
+# MQTT broker information
+mqtt_broker = "localhost"  # Replace with your MQTT broker IP or hostname
+mqtt_port = 1883
+mqtt_topic = "camera/data"  # MQTT topic to publish frames to
 
-# Create a new MQTT client instance
+# Your IP camera's RTSP URL
+rtsp_url = "rtsp://admin:admin@10.78.126.72:8554/live"
+
+# Initialize MQTT client
 client = mqtt.Client()
-client.connect(broker_address)
-client.loop_start()
 
-# Connect to the IP camera stream
-rtsp_url = "rtsp://username:password@camera_ip_address/stream"
+# Connect to the MQTT broker
+client.connect(mqtt_broker, mqtt_port, 60)
+
+# Create a VideoCapture object
 cap = cv2.VideoCapture(rtsp_url)
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+if not cap.isOpened():
+    print("Error: Could not open video stream.")
+else:
+    try:
+        while True:
+            # Capture frame-by-frame
+            ret, frame = cap.read()
 
-    # Process the frame (for example, take a snapshot)
-    _, buffer = cv2.imencode('.jpg', frame)
-    image_data = buffer.tobytes()
+            if not ret:
+                print("Error: Could not read frame.")
+                break
 
-    # Optionally convert image to base64 for transmission
-    # import base64
-    # image_base64 = base64.b64encode(image_data).decode('utf-8')
-    # message = json.dumps({"image_data": image_base64, "timestamp": time.time()})
+            # Encode the frame to JPEG format and convert to base64
+            _, buffer = cv2.imencode('.jpg', frame)
+            jpg_as_text = base64.b64encode(buffer)
 
-    # Publish the image data to the MQTT topic
-    client.publish(topic_camera, image_data)  # Sending raw image data
-    print("Published camera data")
+            # Publish the frame to the MQTT topic
+            client.publish(mqtt_topic, jpg_as_text)
+            print(f"Published frame to {mqtt_topic}")
 
-    # Wait for a bit before sending the next frame
-    time.sleep(1)
+    except KeyboardInterrupt:
+        print("Interrupted by user.")
+        print("Closing the connection...")
 
+# Release the capture
 cap.release()
-client.loop_stop()
+cv2.destroyAllWindows()
+
+# Disconnect from the MQTT broker
 client.disconnect()

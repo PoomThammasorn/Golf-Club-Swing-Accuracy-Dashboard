@@ -17,13 +17,13 @@ app.get("/", (req, res) => {
 });
 
 const mqtt = require("mqtt");
-const client = mqtt.connect("mqtt://localhost");
+const client = mqtt.connect(process.env.MQTT_URL);
 
 client.on("connect", () => {
 	console.log("Connected to MQTT broker");
-	client.subscribe("sensor/data", (err) => {
+	client.subscribe(process.env.MQTT_TOPIC, (err) => {
 		if (!err) {
-			console.log("Subscribed to sensor/data");
+			console.log(`Subscribed to topic: ${process.env.MQTT_TOPIC}`);
 		}
 	});
 });

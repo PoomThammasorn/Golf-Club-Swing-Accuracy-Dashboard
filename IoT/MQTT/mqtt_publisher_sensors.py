@@ -22,20 +22,10 @@ def get_sensor_data():
         'gyroscope': gyroscope
     }
 
-# Function to generate random camera data
-
-
-def get_camera_data():
-    return {
-        'image_url': f"http://example.com/image_{random.randint(1, 100)}.jpg",
-        'timestamp': time.time()
-    }
-
 
 # Define the MQTT broker address and topics
 broker_address = "localhost"
 topic_sensor = "sensor/data"
-topic_camera = "camera/data"
 
 # Create a new MQTT client instance
 client = mqtt.Client()
@@ -50,15 +40,11 @@ try:
     while True:
         # Generate sensor data
         sensor_data = get_sensor_data()
-        camera_data = get_camera_data()
 
         # Publish the data to the respective MQTT topics
         client.publish(topic_sensor, json.dumps(sensor_data))
-        client.publish(topic_camera, json.dumps(camera_data))
 
         print(f"Published to {topic_sensor}: {sensor_data}")
-        print(f"Published to {topic_camera}: {camera_data}")
-
         # Wait for 1 second before sending the next data
         time.sleep(1)
 
