@@ -1,20 +1,56 @@
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as mqtt  # type: ignore
 import json
-from sensors.mpu6050_reader import get_sensor_data
+import random
+import time
 
-# Load MQTT configuration
-broker_address = "YOUR_COMPUTER_IP_ADDRESS"
+# Function to generate random sensor data
+
+
+def get_sensor_data():
+    accelerometer = {
+        'x': round(random.uniform(-10, 10), 2),
+        'y': round(random.uniform(-10, 10), 2),
+        'z': round(random.uniform(-10, 10), 2)
+    }
+    gyroscope = {
+        'x': round(random.uniform(0, 360), 2),
+        'y': round(random.uniform(0, 360), 2),
+        'z': round(random.uniform(0, 360), 2)
+    }
+    return {
+        'accelerometer': accelerometer,
+        'gyroscope': gyroscope
+    }
+
+
+# Define the MQTT broker address and topic
+broker_address = "localhost"
 topic = "sensor/data"
 
-def publish_sensor_data():
-    client = mqtt.Client()
-    client.connect(broker_address)
-    
-    sensor_data = get_sensor_data()
-    payload = json.dumps(sensor_data)
-    
-    client.publish(topic, payload)
-    print(f"Published: {payload}")
+# Create a new MQTT client instance
+client = mqtt.Client()
 
-if __name__ == "__main__":
-    publish_sensor_data()
+# Connect to the MQTT broker
+client.connect(broker_address)
+
+# Start the loop to process callbacks
+client.loop_start()
+
+try:
+    while True:
+        # Generate sensor data
+        data = get_sensor_data()
+        message = json.dumps(data)
+
+        # Publish the data to the MQTT topic
+        client.publish(topic, message)
+        print(f"Published: {message}")
+
+        # Wait for 1 second before sending the next data
+        time.sleep(1)
+
+except KeyboardInterrupt:
+    # Stop the loop and disconnect on interrupt
+    print("Stopping sensor data publisher...")
+    client.loop_stop()
+    client.disconnect()

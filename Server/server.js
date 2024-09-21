@@ -16,6 +16,22 @@ app.get("/", (req, res) => {
 	res.status(200).json({ success: true, data: "server is running" });
 });
 
+const mqtt = require("mqtt");
+const client = mqtt.connect("mqtt://localhost");
+
+client.on("connect", () => {
+	console.log("Connected to MQTT broker");
+	client.subscribe("sensor/data", (err) => {
+		if (!err) {
+			console.log("Subscribed to sensor/data");
+		}
+	});
+});
+
+client.on("message", (topic, message) => {
+	console.log(`Received message: ${message.toString()} on topic: ${topic}`);
+});
+
 // Port
 const PORT = process.env.PORT || 8000;
 
