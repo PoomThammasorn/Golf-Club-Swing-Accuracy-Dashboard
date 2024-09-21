@@ -17,6 +17,8 @@ broker_address = os.getenv("MQTT_URL")
 topic = os.getenv("MQTT_TOPIC")
 
 # Callback function when a message is received
+
+
 def on_message(client, userdata, message):
     global last_frame
     # Decode the base64 message back to image format
@@ -25,6 +27,8 @@ def on_message(client, userdata, message):
     last_frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
 # Function to set up the MQTT client
+
+
 def setup_mqtt_client():
     print("Setting up MQTT client...")
     client = mqtt.Client()
@@ -34,11 +38,14 @@ def setup_mqtt_client():
     print(f"Subscribed to {topic}")
     client.loop_start()  # Start the loop to process network traffic and callbacks
 
+
 # Start the MQTT client in a separate thread
 mqtt_thread = threading.Thread(target=setup_mqtt_client)
 mqtt_thread.start()
 
 # Function to display the video stream using OpenCV
+
+
 def show_video():
     global last_frame
     while True:
@@ -52,6 +59,7 @@ def show_video():
 
     # Release the window when done
     cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     # Start the video display in the main thread

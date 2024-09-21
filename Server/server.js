@@ -1,6 +1,7 @@
+require("dotenv").config({ path: "configs/.env" });
+
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config({ path: "configs/.env" });
 
 const { connectToMQTT } = require("./mqtt/mqttClient");
 const app = express();
