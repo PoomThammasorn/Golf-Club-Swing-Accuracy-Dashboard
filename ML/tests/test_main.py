@@ -5,6 +5,7 @@ from main import app  # Use absolute import to access main.py
 
 client = TestClient(app)
 
+
 def test_root():
     response = client.get("/")
     assert response.status_code == 200
