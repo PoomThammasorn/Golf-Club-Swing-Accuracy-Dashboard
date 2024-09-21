@@ -7,14 +7,15 @@ import cv2
 import numpy as np
 
 # Load environment variables from .env file
-load_dotenv("configs/.env")
+load_dotenv("../configs/mqtt.env")
 
 # Global variable to store the last received image
 last_frame = None
 
 # Define the MQTT broker address and topic
 broker_address = os.getenv("MQTT_URL")
-topic = os.getenv("MQTT_TOPIC")
+broker_port = int(os.getenv("MQTT_PORT"))
+topic = os.getenv("MQTT_CAMERA_TOPIC")
 
 # Callback function when a message is received
 
@@ -33,7 +34,7 @@ def setup_mqtt_client():
     print("Setting up MQTT client...")
     client = mqtt.Client()
     client.on_message = on_message
-    client.connect(broker_address)
+    client.connect(broker_address, broker_port, 60)
     client.subscribe(topic)
     print(f"Subscribed to {topic}")
     client.loop_start()  # Start the loop to process network traffic and callbacks
