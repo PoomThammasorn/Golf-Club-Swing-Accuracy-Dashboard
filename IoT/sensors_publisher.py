@@ -1,10 +1,8 @@
-# main.py
 import time
 from mqtt.mqtt_setup import setup_mqtt_client, publish_data
 import os
 from dotenv import load_dotenv
 from mpu6050 import mpu6050
-from time import sleep
 
 
 def run_sensor_publisher():
