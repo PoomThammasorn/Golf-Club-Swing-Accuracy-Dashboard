@@ -1,4 +1,5 @@
 import os
+import json
 import base64
 import cv2
 import numpy as np
@@ -12,10 +13,31 @@ last_frame = None
 
 def on_message(client, userdata, message):
     global last_frame
-    # Decode the base64 message back to an image format
-    frame_data = base64.b64decode(message.payload)
-    np_arr = np.frombuffer(frame_data, np.uint8)
-    last_frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    try:
+        # Decode the incoming MQTT message payload from bytes to string
+        payload_str = message.payload.decode('utf-8')
+        # Parse the JSON object to get the base64-encoded frame
+        payload = json.loads(payload_str)
+        if "data" not in payload:
+            print("Error: 'data' field not found in the message payload.")
+            return
+        # Extract the base64-encoded image from the "data" field
+        jpg_as_text = payload["data"]
+        # Decode the base64-encoded image back to binary data
+        frame_data = base64.b64decode(jpg_as_text)
+        # Convert the binary image data into a numpy array
+        np_arr = np.frombuffer(frame_data, np.uint8)
+        # Decode the numpy array into an image (OpenCV format)
+        last_frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+        if last_frame is not None:
+            # Display the frame using OpenCV
+            cv2.imshow('Received Frame', last_frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                return  # Close window on pressing 'q'
+
+    except Exception as e:
+        print(f"Error processing frame: {e}")
 
 
 def setup_mqtt_client():

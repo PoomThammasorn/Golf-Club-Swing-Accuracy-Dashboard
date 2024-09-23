@@ -1,5 +1,5 @@
 import cv2
-import paho.mqtt.client as mqtt
+from mqtt.mqtt_setup import setup_mqtt_client, publish_data
 import base64
 from dotenv import load_dotenv
 import os
@@ -13,14 +13,6 @@ def get_rtsp_url():
     rstp_port = os.getenv("RSTP_PORT", "8554")
     rstp_path = os.getenv("RSTP_PATH", "live")
     return f"rtsp://{rstp_user}:{rstp_password}@{rstp_ip}:{rstp_port}/{rstp_path}"
-
-
-def initialize_mqtt_client():
-    mqtt_broker = os.getenv("MQTT_URL", "localhost")
-    mqtt_port = int(os.getenv("MQTT_PORT", "1883"))
-    client = mqtt.Client()
-    client.connect(mqtt_broker, mqtt_port, 60)
-    return client
 
 
 def publish_frames_to_mqtt(client, mqtt_topic, rtsp_url):
@@ -43,9 +35,10 @@ def publish_frames_to_mqtt(client, mqtt_topic, rtsp_url):
                 # Encode the frame to JPEG format and convert to base64
                 _, buffer = cv2.imencode('.jpg', frame)
                 jpg_as_text = base64.b64encode(buffer)
-
+                # Prepare the data to be published
+                data = {"data": jpg_as_text}
                 # Publish the frame to the MQTT topic
-                client.publish(mqtt_topic, jpg_as_text)
+                publish_data(client, mqtt_topic, data)
                 print(f"Published frame to {mqtt_topic}")
 
         except KeyboardInterrupt:
@@ -59,7 +52,10 @@ def publish_frames_to_mqtt(client, mqtt_topic, rtsp_url):
 def main():
     load_dotenv("./configs/.env")
 
-    mqtt_client = initialize_mqtt_client()
+    mqtt_client = setup_mqtt_client(
+        broker_address=os.getenv("MQTT_BROKER_ADDRESS"),
+        broker_port=int(os.getenv("MQTT_BROKER_PORT"))
+    )
     mqtt_topic = os.getenv("MQTT_CAMERA_TOPIC", "camera/data")
     rtsp_url = get_rtsp_url()
 
