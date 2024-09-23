@@ -12,8 +12,7 @@ async def root():
     return {"message": "server is running"}
 
 
-# Include the router for ML-related routes
-app.include_router(ml.router)
+app.include_router(ml.router, prefix="/api")
 
 # Run the app with the port from .env
 if __name__ == "__main__":
