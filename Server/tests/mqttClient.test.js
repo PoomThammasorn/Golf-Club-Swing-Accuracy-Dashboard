@@ -1,5 +1,5 @@
 // Import the function to be tested
-const { connectToMQTT } = require("../mqtt/mqttClient");
+const { connectToMQTT } = require("../mqtt/mqttSetup");
 const mqtt = require("mqtt");
 
 // Mock the MQTT library
