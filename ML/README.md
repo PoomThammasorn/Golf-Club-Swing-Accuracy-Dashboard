@@ -40,7 +40,7 @@
 ## Run
 
 ```bash
-python main.py
+python -m app.main
 ```
 
 ## After install additonal packages
