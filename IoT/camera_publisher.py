@@ -2,7 +2,7 @@ import cv2
 from mqtt.mqtt_setup import (
     setup_mqtt_client,
     publish_data,
-)  # Assuming mqtt_setup.py is configured properly
+)
 import base64
 from dotenv import load_dotenv
 import os
