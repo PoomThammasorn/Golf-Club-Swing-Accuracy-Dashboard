@@ -1,4 +1,5 @@
 name: Bump version and update README
+
 on:
   pull_request:
     types:
@@ -35,13 +36,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create new branch for README update
+        id: create_branch
+        run: |
+          BRANCH_NAME="update-readme-$(date +%Y%m%d%H%M%S)"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
+          git checkout -b $BRANCH_NAME
+
       - name: Update README.md with version
         run: |
           # Get the latest tag (version) from the repository
           VERSION=$(git tag --sort=-v:refname | head -n 1)
 
           # Update the badge in README.md with the new version
-          sed -i "s|https://img.shields.io/badge/version-.*-blue|https://img.shields.io/badge/version-${VERSION}-blue|" README.md
+          sed -i.bak "s|https://img.shields.io/badge/version-.*-blue|https://img.shields.io/badge/version-${VERSION}-blue|" README.md
+          rm README.md.bak # Remove backup created by sed
 
           # Commit changes to README.md
           git config --local user.name "github-actions"
@@ -49,12 +58,19 @@ jobs:
           git add README.md
           git commit -m "Update README.md with version ${VERSION}"
 
-      - name: Create Pull Request
+      - name: Push changes and create pull request
+        id: create_pr
         uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Update README.md with version ${VERSION}"
-          branch: update-readme-version-${{ github.sha }}
+          branch: ${{ env.BRANCH_NAME }}
           title: "Update README.md with version ${VERSION}"
-          body: "This PR updates the README.md file with the latest version ${VERSION}."
-          base: main
+          body: "This pull request updates the README.md with the latest version."
+          base: master
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
+          merge-method: squash
