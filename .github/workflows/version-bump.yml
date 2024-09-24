@@ -1,18 +1,21 @@
 name: Bump version and update README
-
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
-      - main
+      - master
 
 jobs:
   bump-version:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: "0"
 
       - name: Bump version and push tag
@@ -40,11 +43,18 @@ jobs:
           # Update the badge in README.md with the new version
           sed -i "s|https://img.shields.io/badge/version-.*-blue|https://img.shields.io/badge/version-${VERSION}-blue|" README.md
 
-          # Commit and push changes to README.md
+          # Commit changes to README.md
           git config --local user.name "github-actions"
           git config --local user.email "github-actions@github.com"
           git add README.md
           git commit -m "Update README.md with version ${VERSION}"
-          git push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update README.md with version ${VERSION}"
+          branch: update-readme-version-${{ github.sha }}
+          title: "Update README.md with version ${VERSION}"
+          body: "This PR updates the README.md file with the latest version ${VERSION}."
+          base: main
