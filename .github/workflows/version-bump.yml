@@ -1,33 +1,45 @@
-name: Bump version and update README
+name: Bump Version
+
 on:
   pull_request:
     types:
       - closed
     branches:
       - main
+  push:
+    branches:
+      - main
 
 jobs:
   bump-version:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: "0"
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
 
       - name: Set version bump type
         id: set-bump-type
         run: |
-          if [[ "${{ github.head_ref }}" == hotfix/* || "${{ github.head_ref }}" == fix/* ]]; then
-            echo "DEFAULT_BUMP=patch" >> $GITHUB_ENV
+          if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.merged }}" == "true" ]]; then
+            if [[ "${{ github.head_ref }}" == hotfix/* || "${{ github.head_ref }}" == fix/* ]]; then
+              echo "DEFAULT_BUMP=patch" >> $GITHUB_ENV
+            else
+              echo "DEFAULT_BUMP=minor" >> $GITHUB_ENV
+            fi
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.event.before }}" != "${{ github.event.after }}" ]]; then
+            echo "DEFAULT_BUMP=patch" >> $GITHUB_ENV # Default for force pushes
           else
-            echo "DEFAULT_BUMP=minor" >> $GITHUB_ENV
+            echo "SKIP_BUMP=true" >> $GITHUB_ENV # Skip bump for normal pushes
           fi
 
       - name: Bump version and push tag
+        if:
+          (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+          (github.event_name == 'push' && ${{ env.SKIP_BUMP }} != 'true')
         uses: anothrNick/github-tag-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
