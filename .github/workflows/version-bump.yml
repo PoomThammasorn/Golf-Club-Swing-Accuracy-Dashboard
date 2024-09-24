@@ -1,4 +1,3 @@
-# example 2: on merge to master from pull request (recommended)
 name: Bump version
 on:
   pull_request:
@@ -24,4 +23,6 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
         WITH_V: true
-        PRERELEASE: true
+        PRERELEASE: false
+        DEFAULT_BUMP: patch
+        
