@@ -6,9 +6,6 @@ on:
       - closed
     branches:
       - main
-  push:
-    branches:
-      - main
 
 jobs:
   bump-version:
@@ -24,25 +21,13 @@ jobs:
       - name: Set version bump type
         id: set-bump-type
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.pull_request.merged }}" == "true" ]]; then
-            if [[ "${{ github.head_ref }}" == hotfix/* || "${{ github.head_ref }}" == fix/* ]]; then
-              echo "DEFAULT_BUMP=patch" >> $GITHUB_ENV
-            else
-              echo "DEFAULT_BUMP=minor" >> $GITHUB_ENV
-            fi
-            eho "This is a merged PR, bumping version"
-          elif [[ "${{ github.event_name }}" == "push" && "${{ github.event.before }}" != "${{ github.event.after }}" ]]; then
-            echo "This is a force push, bumping patch version"
-            echo "DEFAULT_BUMP=patch" >> $GITHUB_ENV # Default for force pushes
+          if [[ "${{ github.head_ref }}" == hotfix/* || "${{ github.head_ref }}" == fix/* ]]; then
+            echo "DEFAULT_BUMP=patch" >> $GITHUB_ENV
           else
-            echo "This is a normal push, skipping bump"
-            echo "SKIP_BUMP=true" >> $GITHUB_ENV # Skip bump for normal pushes
+            echo "DEFAULT_BUMP=minor" >> $GITHUB_ENV
           fi
 
       - name: Bump version and push tag
-        if:
-          (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
-          (github.event_name == 'push' && ${{ env.SKIP_BUMP }} != 'true')
         uses: anothrNick/github-tag-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
