@@ -18,10 +18,19 @@ jobs:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: "0"
 
+      - name: Set version bump type
+        id: set-bump-type
+        run: |
+          if [[ "${{ github.head_ref }}" == hotfix/* || "${{ github.head_ref }}" == fix/* ]]; then
+            echo "DEFAULT_BUMP=patch" >> $GITHUB_ENV
+          else
+            echo "DEFAULT_BUMP=minor" >> $GITHUB_ENV
+          fi
+
       - name: Bump version and push tag
         uses: anothrNick/github-tag-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: false
           PRERELEASE: false
-          DEFAULT_BUMP: minor
+          DEFAULT_BUMP: ${{ env.DEFAULT_BUMP }}
