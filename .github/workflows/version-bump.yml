@@ -26,24 +26,19 @@ jobs:
   update-readme:
     needs: bump-version
     runs-on: ubuntu-22.04
-
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Get version from tag
-        id: version
-        uses: battila7/get-version-action@v2
+        uses: actions/checkout@v4
 
       - name: Update README.md with version
         run: |
-          VERSION=${{ steps.version.outputs.version }}
+          # Get the latest tag (version) from the repository
+          VERSION=$(git tag --sort=-v:refname | head -n 1)
 
           # Update the badge in README.md with the new version
           sed -i "s|https://img.shields.io/badge/version-.*-blue|https://img.shields.io/badge/version-${VERSION}-blue|" README.md
-
-          # Update the link to the version in README.md
-          sed -i "s|https://github.com/PoomThammasorn/Golf-Club-Swing-Accuracy-Dashboard/releases/tag/.*)|https://github.com/PoomThammasorn/Golf-Club-Swing-Accuracy-Dashboard/releases/tag/${VERSION})|" README.md
 
           # Commit and push changes to README.md
           git config --local user.name "github-actions"
