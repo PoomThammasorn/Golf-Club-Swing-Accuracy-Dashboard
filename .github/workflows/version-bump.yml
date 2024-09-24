@@ -36,15 +36,6 @@ jobs:
             echo "SKIP_BUMP=true" >> $GITHUB_ENV # Skip bump for normal pushes
           fi
 
-      - name: Set version bump type
-        id: set-bump-type
-        run: |
-          if [[ "${{ github.head_ref }}" == hotfix/* || "${{ github.head_ref }}" == fix/* ]]; then
-            echo "DEFAULT_BUMP=patch" >> $GITHUB_ENV
-          else
-            echo "DEFAULT_BUMP=minor" >> $GITHUB_ENV
-          fi
-
       - name: Bump version and push tag
         if:
           (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
