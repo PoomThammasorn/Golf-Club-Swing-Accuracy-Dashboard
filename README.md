@@ -3,8 +3,6 @@
 
 # Wireless Project
 
-![GitHub version](https://img.shields.io/badge/version-0.0.1-blue)
-
 ### Golf Club Swing Accuracy Dashboard
 
 G5: Sia Arm
