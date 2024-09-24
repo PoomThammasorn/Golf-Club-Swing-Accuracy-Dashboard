@@ -4,9 +4,9 @@ import json
 import time
 
 
-def setup_mqtt_client(broker_address, broker_port):
+def setup_mqtt_client(broker_address, broker_port, keep_alive=60):
     client = mqtt.Client()
-    client.connect(broker_address, broker_port, 60)
+    client.connect(broker_address, broker_port, keep_alive)
     return client
 
 
