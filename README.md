@@ -3,7 +3,7 @@
 
 # Wireless Project
 
-[![GitHub version](https://github.com/PoomThammasorn/Golf-Club-Swing-Accuracy-Dashboard/releases/tag/0.0.1)](https://img.shields.io/badge/version-0.0.1-blue)
+![GitHub version](https://img.shields.io/badge/version-0.0.1-blue)
 
 ### Golf Club Swing Accuracy Dashboard
 
