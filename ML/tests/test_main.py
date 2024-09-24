@@ -32,7 +32,7 @@ async def test_process_data(mocked_httpx_post):
     # Check if the ML service processed and responded correctly
     assert response.json() == {
         "status": "Success",
-        "message": f"Data for task {task_id} received. Processing in the background.",
+        "message": f"Data processing started for task_id: {task_id}",
     }
 
     # Verify that the mock was called with the correct parameters
