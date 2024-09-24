@@ -32,4 +32,4 @@ jobs:
       - name: Run tests
         run: |
           source .venv/bin/activate
-          pytest  # Assuming you are using pytest for your tests
+          pytest
