@@ -1,4 +1,5 @@
-name: Bump version
+name: Bump version and update README
+
 on:
   push:
     branches:
@@ -10,15 +11,40 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: '0'
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
 
-    - name: Bump version and push tag
-      uses: anothrNick/github-tag-action@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        WITH_V: false
-        PRERELEASE: false
-        DEFAULT_BUMP: patch
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: false
+          PRERELEASE: false
+          DEFAULT_BUMP: patch
 
+  update-readme:
+    needs: build # Ensure this job runs after the version bump job
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Update README.md with version
+        run: |
+          # Get the latest tag (version) from the repository
+          VERSION=$(git describe --tags --abbrev=0)
+
+          # Update the badge text and link with the new version
+          sed -i "s|https://img.shields.io/badge/version-.*-blue|https://img.shields.io/badge/version-${VERSION}-blue|" README.md
+          sed -i "s|https://github.com/PoomThammasorn/Golf-Club-Swing-Accuracy-Dashboard/releases/tag/.*)|https://github.com/PoomThammasorn/Golf-Club-Swing-Accuracy-Dashboard/releases/tag/${VERSION})|" README.md
+
+          # Commit and push changes to README.md
+          git config --local user.name "github-actions"
+          git config --local user.email "github-actions@github.com"
+          git add README.md
+          git commit -m "Update README.md with version ${VERSION}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
