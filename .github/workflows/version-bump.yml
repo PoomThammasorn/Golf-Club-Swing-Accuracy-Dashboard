@@ -30,9 +30,12 @@ jobs:
             else
               echo "DEFAULT_BUMP=minor" >> $GITHUB_ENV
             fi
+            eho "This is a merged PR, bumping version"
           elif [[ "${{ github.event_name }}" == "push" && "${{ github.event.before }}" != "${{ github.event.after }}" ]]; then
+            echo "This is a force push, bumping patch version"
             echo "DEFAULT_BUMP=patch" >> $GITHUB_ENV # Default for force pushes
           else
+            echo "This is a normal push, skipping bump"
             echo "SKIP_BUMP=true" >> $GITHUB_ENV # Skip bump for normal pushes
           fi
 
