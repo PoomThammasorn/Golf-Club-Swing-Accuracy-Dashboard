@@ -6,84 +6,95 @@ import numpy as np
 import threading
 import paho.mqtt.client as mqtt
 from dotenv import load_dotenv
+from threading import Lock
+import logging
 
-# Initialize last_frame to None
-last_frame = None
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+
+# Thread lock for handling frame access
+frame_lock = Lock()
+last_frame = None  # Shared frame across threads
 
 
 def on_message(client, userdata, message):
     global last_frame
     try:
-        # Decode the incoming MQTT message payload
-        payload_str = message.payload.decode('utf-8')
-        # Parse the JSON object
+        payload_str = message.payload.decode("utf-8")
         payload = json.loads(payload_str)
 
-        # Check if "data" field exists
         if "data" not in payload:
-            print("Error: 'data' field not found in the message payload.")
+            logging.error("Error: 'data' field not found in the message payload.")
             return
 
-        # Extract and decode the base64-encoded frame
         jpg_as_text = payload["data"]
         frame_data = base64.b64decode(jpg_as_text)
-
-        # Convert the binary data to a numpy array
         np_arr = np.frombuffer(frame_data, np.uint8)
-        last_frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+        if frame is not None:
+            with frame_lock:
+                last_frame = frame
+        else:
+            logging.error("Error: Could not decode image data.")
 
     except json.JSONDecodeError as e:
-        print(f"JSON decoding error: {e}")
+        logging.error(f"JSON decoding error: {e}")
     except Exception as e:
-        print(f"Error processing frame: {e}")
+        logging.error(f"Error processing frame: {e}")
 
 
-def setup_mqtt_client():
-    print("Setting up MQTT client...")
-
-    broker_address = os.getenv("MQTT_URL", "localhost")
-    broker_port = int(os.getenv("MQTT_PORT", 1883))
-    topic = os.getenv("MQTT_CAMERA_TOPIC", "camera/data")
+def setup_mqtt_client(broker_address, broker_port, topic):
+    logging.info("Setting up MQTT client...")
 
     client = mqtt.Client()
     client.on_message = on_message
 
-    client.connect(broker_address, broker_port, 60)
-    client.subscribe(topic)
-    print(f"Subscribed to {topic}")
+    try:
+        client.connect(broker_address, broker_port, 60)
+        client.subscribe(topic)
+        logging.info(f"Subscribed to {topic}")
 
-    # Start the MQTT loop
-    client.loop_start()
+        # Start the MQTT loop
+        client.loop_start()
+    except Exception as e:
+        logging.error(f"Error connecting to MQTT broker: {e}")
 
 
-def start_mqtt_thread():
-    mqtt_thread = threading.Thread(target=setup_mqtt_client)
+def start_mqtt_thread(broker_address, broker_port, topic):
+    mqtt_thread = threading.Thread(
+        target=setup_mqtt_client, args=(broker_address, broker_port, topic)
+    )
     mqtt_thread.daemon = True
     mqtt_thread.start()
 
 
-def show_video():
+def show_video(fps=30):
     global last_frame
+    delay = int(1000 / fps)
     while True:
-        if last_frame is not None:
-            cv2.imshow('MQTT Camera Feed', last_frame)
+        with frame_lock:
+            if last_frame is not None:
+                cv2.imshow("MQTT Camera Feed", last_frame)
 
-        # Exit the loop if the 'q' key is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(delay) & 0xFF == ord("q"):
             break
 
     cv2.destroyAllWindows()
+    logging.info("Video feed closed.")
 
 
 def main():
-    # Load environment variables
     load_dotenv("./configs/.env")
+    broker_address = os.getenv("MQTT_URL", "localhost")
+    broker_port = int(os.getenv("MQTT_PORT", 1883))
+    topic = os.getenv("MQTT_CAMERA_TOPIC", "camera/data")
 
-    # Start the MQTT client in a separate thread
-    start_mqtt_thread()
-
-    # Start displaying the video stream
-    show_video()
+    try:
+        start_mqtt_thread(broker_address, broker_port, topic)
+        show_video(fps=30)
+    except KeyboardInterrupt:
+        logging.info("Exiting...")
 
 
 if __name__ == "__main__":

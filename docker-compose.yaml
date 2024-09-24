@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  ml_fastapi:
+    build:
+      context: ./ML
+    container_name: ml-fastapi
+    ports:
+      - "9000:9000"
+    environment:
+      - NODE_WEBHOOK_URL=http://server_node:8000
+    env_file:
+      - ./ML/configs/.env
+    networks:
+      - app-network
+
+  server_node:
+    build:
+      context: ./Server
+    container_name: server-node
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./Server/configs/.env
+    environment:
+      - ML_SERVICE_URL=http://ml_fastapi:9000/api/ml
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
