@@ -38,7 +38,7 @@ async def process_ml_data(task_id: int):
 
 @router.post("/ml/data/{task_id}")
 async def process_data(task_id: int, background_tasks: BackgroundTasks):
-    print(f"Received data for task ID: {task_id}")
+    print(f"Received data request for task_id: {task_id}")
 
     # Add the ML processing task to the background
     background_tasks.add_task(process_ml_data, task_id)
@@ -46,5 +46,5 @@ async def process_data(task_id: int, background_tasks: BackgroundTasks):
     # Acknowledge the receipt of data immediately
     return {
         "status": "Success",
-        "message": f"Data for task {task_id} received. Processing in the background.",
+        "message": f"Data processing started for task_id: {task_id}",
     }

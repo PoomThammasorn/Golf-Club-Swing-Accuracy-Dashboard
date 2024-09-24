@@ -15,36 +15,44 @@ const mqttMessageHandler = async (topic, message) => {
 				data.shift();
 			}
 
-			// Calculate average
-			const averageAccelerometer_x =
-				data.reduce((acc, val) => acc + val.gyroscope.x, 0) / data.length;
-			const averageAccelerometer_y =
-				data.reduce((acc, val) => acc + val.gyroscope.y, 0) / data.length;
-			const averageAccelerometer_z =
-				data.reduce((acc, val) => acc + val.gyroscope.z, 0) / data.length;
-
-			const averageGyroscope_x =
-				data.reduce((acc, val) => acc + val.accelerometer.x, 0) / data.length;
-			const averageGyroscope_y =
-				data.reduce((acc, val) => acc + val.accelerometer.y, 0) / data.length;
-			const averageGyroscope_z =
-				data.reduce((acc, val) => acc + val.accelerometer.z, 0) / data.length;
+			// Calculate averages
+			const averages = calculateAverages(data);
 
 			if (Date.now() - lastLogTime > LOG_COOLDOWN) {
 				lastLogTime = Date.now();
-				// Log the average
-				console.log(`Average sensor data at ${new Date().toISOString()}`);
-				console.log(
-					`Average accelerometer: ${averageAccelerometer_x}, ${averageAccelerometer_y}, ${averageAccelerometer_z}`
-				);
-				console.log(
-					`Average gyroscope: ${averageGyroscope_x}, ${averageGyroscope_y}, ${averageGyroscope_z}\n`
-				);
+				logAverages(averages);
 			}
 		}
 	} catch (error) {
 		console.error(`Error processing message: ${error.message}`);
 	}
+};
+
+const calculateAverages = (data) => {
+	// Calculate averages for accelerometer and gyroscope
+	const averageAccelerometer = {
+		x: data.reduce((acc, val) => acc + val.accelerometer.x, 0) / data.length,
+		y: data.reduce((acc, val) => acc + val.accelerometer.y, 0) / data.length,
+		z: data.reduce((acc, val) => acc + val.accelerometer.z, 0) / data.length,
+	};
+
+	const averageGyroscope = {
+		x: data.reduce((acc, val) => acc + val.gyroscope.x, 0) / data.length,
+		y: data.reduce((acc, val) => acc + val.gyroscope.y, 0) / data.length,
+		z: data.reduce((acc, val) => acc + val.gyroscope.z, 0) / data.length,
+	};
+
+	return { averageAccelerometer, averageGyroscope };
+};
+
+const logAverages = ({ averageAccelerometer, averageGyroscope }) => {
+	console.log(`Average sensor data at ${new Date().toISOString()}`);
+	console.log(
+		`Average accelerometer: ${averageAccelerometer.x}, ${averageAccelerometer.y}, ${averageAccelerometer.z}`
+	);
+	console.log(
+		`Average gyroscope: ${averageGyroscope.x}, ${averageGyroscope.y}, ${averageGyroscope.z}\n`
+	);
 };
 
 module.exports = { mqttMessageHandler };
