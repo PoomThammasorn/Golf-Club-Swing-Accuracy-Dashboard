@@ -4,7 +4,7 @@ const SensorService = require("../services/sensor_service");
 const mqtt = require("mqtt");
 
 const client = mqtt.connect("mqtt://localhost");
-const sensorService = new SensorService();
+const sensorService = new SensorService(client);
 
 const subscribeToTopics = (topics) => {
 	topics.forEach((topic) => {
@@ -15,15 +15,6 @@ const subscribeToTopics = (topics) => {
 				console.error(`Failed to subscribe to topic: ${topic}`, err);
 			}
 		});
-	});
-};
-
-const publishToWebhook = (data) => {
-	console.log(data);
-	client.publish("webhook", JSON.stringify(data), (err) => {
-		if (err) {
-			console.error("Failed to publish data to webhook:", err);
-		}
 	});
 };
 
@@ -63,5 +54,3 @@ const shutdown = () => {
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
-
-module.exports = { publishToWebhook };

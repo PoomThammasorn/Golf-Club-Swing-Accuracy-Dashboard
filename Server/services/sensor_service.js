@@ -1,12 +1,11 @@
 // sensor_service.js
 
-const publishToWebhook = require("./subscriber");
-
 class SensorService {
-	constructor(threshold = 2, club_length = 0.85) {
+	constructor(client, threshold = 2, club_length = 0.85) {
 		this.buffer = [];
 		this.threshold = threshold; // Impact detection threshold in m/s
 		this.club_length = club_length; // Club length in meters
+		this.client = client;
 	}
 
 	addData(gyZ) {
@@ -32,11 +31,17 @@ class SensorService {
 			const velocity = m * this.club_length;
 			if (velocity > this.threshold) {
 				console.log("Impact detected with velocity:", velocity, "m/s");
-				payload = {
+				const payload = {
 					timestamp: this.buffer[this.buffer.length - 2].timestamp,
 					velocity: velocity,
 				};
-				publishToWebhook(payload);
+				this.client.publish("realtime/data", JSON.stringify(payload), (err) => {
+					if (err) {
+						console.error("Failed to publish data to webhook:", err);
+					} else {
+						console.log("Published data to webhook", payload);
+					}
+				});
 				this.clearBuffer();
 			}
 		}
