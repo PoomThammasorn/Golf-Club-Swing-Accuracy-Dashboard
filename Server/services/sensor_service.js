@@ -1,11 +1,12 @@
 // sensor_service.js
 
 class SensorService {
-	constructor(client, threshold = 2, club_length = 0.85) {
+	constructor(client, publish_topic, threshold = 2, club_length = 0.85) {
 		this.buffer = [];
 		this.threshold = threshold; // Impact detection threshold in m/s
 		this.club_length = club_length; // Club length in meters
 		this.client = client;
+		this.publish_topic = publish_topic;
 	}
 
 	addData(gyZ) {
@@ -35,13 +36,19 @@ class SensorService {
 					timestamp: this.buffer[this.buffer.length - 2].timestamp,
 					velocity: velocity,
 				};
-				this.client.publish("realtime/data", JSON.stringify(payload), (err) => {
-					if (err) {
-						console.error("Failed to publish data to webhook:", err);
-					} else {
-						console.log("Published data to webhook", payload);
+				this.client.publish(
+					this.publish_topic,
+					JSON.stringify(payload),
+					(err) => {
+						if (err) {
+							console.error("Failed to publish data to webhook:", err);
+						} else {
+							console.log(
+								`Published data to ${this.client.options.host} on publish_topic: ${this.publish_topic}`
+							);
+						}
 					}
-				});
+				);
 				this.clearBuffer();
 			}
 		}
