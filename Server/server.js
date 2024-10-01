@@ -1,10 +1,10 @@
 const express = require("express");
 const cors = require("cors");
-const { connectToMQTT } = require("./mqtt/mqttSetup");
-const { mqttMessageHandler } = require("./mqtt/mqttMessageHandler");
 const ml = require("./routes/ml");
 
-require("dotenv").config({ path: "configs/.env" });
+require("dotenv").config({ path: "./configs/.env" });
+
+const { startSubscriber } = require("./services/subscriber");
 
 const app = express();
 app.use(cors());
@@ -16,20 +16,14 @@ app.get("/", (req, res) => {
 });
 
 // Use the ML routes
-app.use("/api/ml", ml);
+app.use("/webhook/ml", ml);
 
-// Connect to MQTT broker
-connectToMQTT(
-	process.env.MQTT_URL || "localhost",
-	process.env.MQTT_PORT || 1883,
-	process.env.MQTT_SENSORS_TOPIC || "sensors/data",
-	mqttMessageHandler
-);
+startSubscriber();
 
 // Start server
 const PORT = process.env.PORT || 8000;
 const server = app.listen(PORT, () => {
-	console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+	console.log(`Server running on port ${PORT}`);
 });
 
 process.on("unhandledRejection", (err) => {

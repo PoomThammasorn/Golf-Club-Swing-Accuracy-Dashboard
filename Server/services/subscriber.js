@@ -3,8 +3,12 @@
 const SensorService = require("../services/sensor_service");
 const mqtt = require("mqtt");
 
-const client = mqtt.connect("mqtt://localhost");
-const sensorService = new SensorService(client);
+const host_url = process.env.MQTT_HOST || "localhost";
+const host_port = process.env.MQTT_PORT || 1883;
+const client = mqtt.connect(`mqtt://${host_url}:${host_port}`);
+const sensors_topic = process.env.MQTT_SENSORS_TOPIC || "sensor/data";
+const publish_topic = process.env.MQTT_FRONTEND_TOPIC || "realtime/data";
+const sensorService = new SensorService(client, publish_topic);
 
 const subscribeToTopics = (topics) => {
 	topics.forEach((topic) => {
@@ -18,33 +22,6 @@ const subscribeToTopics = (topics) => {
 	});
 };
 
-client.on("connect", () => {
-	console.log("Connected to MQTT broker");
-	subscribeToTopics(["sensor/data", "camera/video"]);
-});
-
-client.on("message", (topic, message) => {
-	if (topic === "sensor/data") {
-		try {
-			message = JSON.parse(message);
-			sensorService.addData(message.gyroscope.z);
-		} catch (err) {
-			console.error("Failed to parse sensor data:", err);
-		}
-	} else if (topic === "camera/video") {
-		console.log("Received video frame");
-		// Do later
-	}
-});
-
-client.on("error", (error) => {
-	console.error(`Error: ${error}`);
-});
-
-client.on("offline", () => {
-	console.log("Client is offline");
-});
-
 const shutdown = () => {
 	client.end(() => {
 		console.log("Disconnected from MQTT broker");
@@ -52,5 +29,34 @@ const shutdown = () => {
 	});
 };
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+const startSubscriber = () => {
+	console.log(`Starting MQTT subscriber on host ${host_url} port ${host_port}`);
+	client.on("connect", () => {
+		console.log("Connected to MQTT broker");
+		subscribeToTopics([sensors_topic]);
+	});
+
+	client.on("message", (topic, message) => {
+		if (topic === "sensor/data") {
+			try {
+				message = JSON.parse(message);
+				sensorService.addData(message.gyroscope.z);
+			} catch (err) {
+				console.error("Failed to parse sensor data:", err);
+			}
+		}
+	});
+
+	client.on("error", (error) => {
+		console.error(`Error: ${error}`);
+	});
+
+	client.on("offline", () => {
+		console.log("Client is offline");
+	});
+
+	process.on("SIGINT", shutdown);
+	process.on("SIGTERM", shutdown);
+};
+
+module.exports = { startSubscriber };
