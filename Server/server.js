@@ -1,8 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const ml = require("./routes/ml");
+const connectDB = require('./configs/db');
+
 
 require("dotenv").config({ path: "./configs/.env" });
+
+//Connect to database
+connectDB();
 
 const { startSubscriber } = require("./services/subscriber");
 
