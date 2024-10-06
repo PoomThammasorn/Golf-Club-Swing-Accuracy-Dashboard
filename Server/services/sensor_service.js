@@ -1,39 +1,29 @@
 // sensor_service.js
 
 class SensorService {
-	constructor(client, publish_topic, threshold = 2, club_length = 0.85) {
-		this.buffer = [];
+	constructor(client, publish_topic, threshold = 8.5) {
+		this.top_swing = { "timestamp": 0, "x": 1e9 }
 		this.threshold = threshold; // Impact detection threshold in m/s
-		this.club_length = club_length; // Club length in meters
 		this.client = client;
 		this.publish_topic = publish_topic; // Topic to publish impact data
 	}
 
-	addData(gyZ) {
-		const timestamp = Date.now();
-		gyZ *= Math.PI / 180; // Convert degrees to radians
-		this.buffer.push({ timestamp, z: gyZ });
-
-		if (this.buffer.length > 3) {
-			this.checkImpact();
-		}
-
-		if (this.buffer.length > 10) {
-			this.buffer.shift();
-		}
+	calculateVelocity(timestamp, acX) {
+		const dt = (timestamp - this.top_swing.timestamp) / 1000;
+		return Math.abs(acX - this.top_swing.x) / dt;
 	}
 
-	checkImpact() {
-		const l = this.buffer[this.buffer.length - 3].z;
-		const m = this.buffer[this.buffer.length - 2].z;
-		const r = this.buffer[this.buffer.length - 1].z;
-
-		if (m > l && m > r) {
-			const velocity = m * this.club_length;
+	addData(acX) {
+		const timestamp = Date.now();
+		if (acX < this.top_swing.x) {
+			this.top_swing = { "timestamp": timestamp, "x": acX }
+		}
+		if (this.top_swing.x < -1 && Math.floor(Math.abs(acX)) === 0) {
+			const velocity = this.calculateVelocity(timestamp, acX);
 			if (velocity > this.threshold) {
 				console.log("Impact detected with velocity:", velocity, "m/s");
 				const payload = {
-					timestamp: this.buffer[this.buffer.length - 2].timestamp,
+					timestamp: timestamp,
 					velocity: velocity,
 				};
 				this.client.publish(
@@ -44,18 +34,18 @@ class SensorService {
 							console.error("Failed to publish data to webhook:", err);
 						} else {
 							console.log(
-								`Published data to ${this.client.options.host} on publish_topic: ${this.publish_topic}`
+								`Published data to ${this.client.options.host} on publish_topic: ${this.publish_topic} at ${timestamp}`
 							);
 						}
 					}
 				);
-				this.clearBuffer();
+				this.clearTopSwing();
 			}
 		}
 	}
 
-	clearBuffer() {
-		this.buffer = [];
+	clearTopSwing() {
+		this.top_swing = { "timestamp": 0, "x": 1e9 }
 	}
 
 	setThreshold(newThreshold) {

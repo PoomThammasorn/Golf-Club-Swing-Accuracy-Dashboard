@@ -39,8 +39,9 @@ const startSubscriber = () => {
 	client.on("message", (topic, message) => {
 		if (topic === "sensor/data") {
 			try {
-				message = JSON.parse(message);
-				sensorService.addData(message.gyroscope.z);
+				message = JSON.parse(message)
+				// console.log(message.accelerometer.x);
+				sensorService.addData(message.accelerometer.x);
 			} catch (err) {
 				console.error("Failed to parse sensor data:", err);
 			}
@@ -59,4 +60,5 @@ const startSubscriber = () => {
 	process.on("SIGTERM", shutdown);
 };
 
+startSubscriber();
 module.exports = { startSubscriber };
