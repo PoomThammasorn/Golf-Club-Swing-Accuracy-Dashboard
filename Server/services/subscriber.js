@@ -1,11 +1,12 @@
 // subscriber.js
+const dotenv = require("dotenv");
+dotenv.config({ path: "./configs/.env" });
 
 const SensorService = require("../services/sensor_service");
 const mqtt = require("mqtt");
 
 const host_url = process.env.MQTT_HOST || "localhost";
-const host_port = process.env.MQTT_PORT || 1883;
-const client = mqtt.connect(`mqtt://${host_url}:${host_port}`);
+const client = mqtt.connect(`mqtt://${host_url}`);
 const sensors_topic = process.env.MQTT_SENSORS_TOPIC || "sensor/data";
 const publish_topic = process.env.MQTT_FRONTEND_TOPIC || "realtime/data";
 const sensorService = new SensorService(client, publish_topic);
@@ -30,16 +31,16 @@ const shutdown = () => {
 };
 
 const startSubscriber = () => {
-	console.log(`Starting MQTT subscriber on host ${host_url} port ${host_port}`);
+	console.log(`Starting MQTT subscriber on host ${host_url}`);
 	client.on("connect", () => {
 		console.log("Connected to MQTT broker");
 		subscribeToTopics([sensors_topic]);
 	});
 
 	client.on("message", (topic, message) => {
-		if (topic === "sensor/data") {
+		if (topic === sensors_topic) {
 			try {
-				message = JSON.parse(message)
+				message = JSON.parse(message);
 				// console.log(message.accelerometer.x);
 				sensorService.addData(message.accelerometer.x);
 			} catch (err) {
