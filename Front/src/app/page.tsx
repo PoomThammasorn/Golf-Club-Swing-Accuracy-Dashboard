@@ -10,9 +10,13 @@ export default function Home() {
             </div>
 
             {/* RealTimePanel */}
-            <RealTimePanel />
+            <div className="flex flex-row justify-center my-6">
+                <RealTimePanel />
+            </div>
 
-            <HistoryPanel />
+            <div className="flex flex-row justify-center my-6">
+                <HistoryPanel />
+            </div>
         </main>
     )
 }

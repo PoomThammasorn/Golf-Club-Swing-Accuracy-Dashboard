@@ -1,40 +1,61 @@
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
-import { Spin } from 'antd';
-import Chart from 'chart.js/auto';
+import Chart, { ChartConfiguration } from 'chart.js/auto';
+import ChartDataLabels from 'chartjs-plugin-datalabels'; // Import the plugin
 
-export default function PowerBar(props) {
+interface PowerBarProps {
+    value: number;
+    xAxisLabel?: string;
+    yAxisLabel?: string;
+    showDataLabels?: boolean;
+}
 
-    const canvasRef = useRef(null);
-    const [chartInstance, setChartInstance] = useState(null);
+// Register the plugin with Chart.js
+Chart.register(ChartDataLabels);
+
+const getColor = (value: number) => {
+    if (value < 30) {
+        return '#b9e840'; // Low values
+    } else if (value >= 30 && value <= 70) {
+        return '#fbb322'; // Medium values
+    } else {
+        return '#be360d'; // High values
+    }
+}
+
+export default function PowerBar(props: PowerBarProps) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [chartInstance, setChartInstance] = useState<Chart | null>(null);
 
     useEffect(() => {
         try {
             if (chartInstance) {
                 chartInstance.destroy();
             }
-            const ctx = canvasRef.current.getContext('2d');
+
+            const ctx = canvasRef.current?.getContext('2d');
+            if (!ctx) return;
+
             const data = {
                 labels: [""],
                 datasets: [
                     {
-                        data: [120],
-                        backgroundColor: ["red"],
+                        data: [props.value * 1.5],
+                        backgroundColor: [getColor(props.value)],
                         borderWidth: 0,
                         borderRadius: 3,
                     },
                 ],
             };
 
-            const config = {
+            const config: ChartConfiguration<'bar'> = {
                 type: 'bar',
                 data: data,
                 options: {
+                    indexAxis: 'y',
                     responsive: false,
                     maintainAspectRatio: false,
                     scales: {
-                        x: {
+                        y: {
                             title: {
                                 display: true,
                                 text: props.xAxisLabel,
@@ -46,7 +67,7 @@ export default function PowerBar(props) {
                                 color: '#666666',
                             },
                             ticks: {
-                                display: false,
+                                display: true,
                                 autoSkip: false,
                                 font: {
                                     family: 'Roboto Condensed, sans-serif',
@@ -56,7 +77,7 @@ export default function PowerBar(props) {
                                 color: '#666666',
                             },
                         },
-                        y: {
+                        x: {
                             title: {
                                 display: true,
                                 text: props.yAxisLabel,
@@ -69,9 +90,9 @@ export default function PowerBar(props) {
                             },
                             beginAtZero: true,
                             min: 0,
-                            max: 200,
+                            max: 100,
                             ticks: {
-                                stepSize: 50,
+                                stepSize: 25,
                                 font: {
                                     family: 'Roboto Condensed, sans-serif',
                                     size: 14,
@@ -86,21 +107,22 @@ export default function PowerBar(props) {
                             display: false,
                         },
                         tooltip: {
-                            enabled: true,
+                            enabled: false,
                         },
-                        datalabels: 
-                            props.showDataLabels ? {
-                                color: '#666666', 
-                                font: {
-                                    size: 10, 
-                                    weight: 'bold'
-                                },
-                                anchor: 'end', 
-                                align: 'end', 
-                                offset: -3,
-                            } : {
-                                display: false,
-                            },
+                        datalabels: props.showDataLabels
+                            ? {
+                                  color: '#666666',
+                                  font: {
+                                      size: 10,
+                                      weight: 'bold',
+                                  },
+                                  anchor: 'end',
+                                  align: 'end',
+                                  offset: -3,
+                              }
+                            : {
+                                  display: false,
+                              },
                     },
                 },
             };
@@ -111,14 +133,15 @@ export default function PowerBar(props) {
             return () => {
                 newChartInstance.destroy();
             };
+
         } catch (ex) {
             console.error(ex);
         }
-    }, []);
+    }, [props]);
 
     return (
         <div>
-            <canvas width="140" height="230" ref={canvasRef} />
+            <canvas width="230" height="140" ref={canvasRef} />
         </div>
     );
 }
