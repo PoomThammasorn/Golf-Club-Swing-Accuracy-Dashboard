@@ -1,6 +1,4 @@
 // subscriber.js
-const dotenv = require("dotenv");
-dotenv.config({ path: "./configs/.env" });
 
 const SensorService = require("../services/sensor_service");
 const mqtt = require("mqtt");
