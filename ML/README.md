@@ -4,7 +4,7 @@
 
 - Python 3.9.6 or higher
 - pip
-- MQTT broker
+- [MQTT broker](https://mosquitto.org)
 - [IP Camera Lite](https://apps.apple.com/th/app/ip-camera-lite/id1013455241?l=th)
 
 ## Setup
