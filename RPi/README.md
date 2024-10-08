@@ -45,12 +45,6 @@
   python sensors_publisher.py
   ```
 
-- For Run Camera Publisher that recieve data from [IP Camera Lite](https://apps.apple.com/th/app/ip-camera-lite/id1013455241?l=th) and publish to MQTT Broker
-
-  ```bash
-  python camera_publisher.py
-  ```
-
 ## After install additonal packages
 
 ```bash
