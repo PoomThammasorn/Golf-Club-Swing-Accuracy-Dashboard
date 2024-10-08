@@ -26,11 +26,29 @@ class MQTTClient:
         self.keep_alive = keep_alive
 
     def connect(self):
-        logging.info(
-            f"Connecting to MQTT Broker at {self.broker_address}:{self.broker_port}"
-        )
-        self.client.connect(self.broker_address, self.broker_port, self.keep_alive)
-        self.client.loop_start()
+        retry_count = 0
+        max_retries = 5
+        base_delay = 5  # Base delay for exponential backoff
+
+        while retry_count < max_retries:
+            try:
+                logging.info(
+                    f"Connecting to MQTT Broker at {self.broker_address}:{self.broker_port}"
+                )
+                self.client.connect(self.broker_address, self.broker_port, self.keep_alive)
+                self.client.loop_start()  # Start the MQTT client loop
+                logging.info("Connected successfully to MQTT Broker.")
+                return  # Exit if connection is successful
+
+            except Exception as e:
+                retry_count += 1
+                delay = base_delay * retry_count
+                logging.error(f"Connection failed (attempt {retry_count}/{max_retries}): {e}")
+                if retry_count < max_retries:
+                    logging.info(f"Retrying in {delay} seconds...")
+                    time.sleep(delay)  # Wait before retrying
+                else:
+                    raise Exception("Failed to connect to MQTT Broker.")
 
     def publish(self, topic, data):
         payload = json.dumps(data)

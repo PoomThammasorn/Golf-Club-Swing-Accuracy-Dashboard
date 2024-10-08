@@ -4,7 +4,8 @@ const SensorService = require("../services/sensor_service");
 const mqtt = require("mqtt");
 
 const host_url = process.env.MQTT_HOST || "localhost";
-const client = mqtt.connect(`mqtt://${host_url}`);
+const host_port = process.env.MQTT_PORT || 1883;
+const client = mqtt.connect(`mqtt://${host_url}:${host_port}`);
 const sensors_topic = process.env.MQTT_SENSORS_TOPIC || "sensor/data";
 const publish_topic = process.env.MQTT_FRONTEND_TOPIC || "realtime/data";
 const sensorService = new SensorService(client, publish_topic);
@@ -29,7 +30,7 @@ const shutdown = () => {
 };
 
 const startSubscriber = () => {
-	console.log(`Starting MQTT subscriber on host ${host_url}`);
+	console.log(`Starting MQTT subscriber on host ${host_url} port ${host_port}`);
 	client.on("connect", () => {
 		console.log("Connected to MQTT broker");
 		subscribeToTopics([sensors_topic]);
@@ -59,5 +60,4 @@ const startSubscriber = () => {
 	process.on("SIGTERM", shutdown);
 };
 
-startSubscriber();
 module.exports = { startSubscriber };

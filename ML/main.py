@@ -14,21 +14,37 @@ import queue
 import warnings
 import uvicorn
 from services.mqtt import MQTTClient
+import colorlog
 
 
 warnings.filterwarnings("ignore")
 
 load_dotenv("./configs/.env")
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Set up colorlog
+handler = colorlog.StreamHandler()
+handler.setFormatter(
+    colorlog.ColoredFormatter(
+        "%(log_color)s%(levelname)s:     %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        log_colors={
+            "DEBUG": "cyan",
+            "INFO": "green",
+            "WARNING": "yellow",
+            "ERROR": "red",
+            "CRITICAL": "bold_red",
+        },
+    )
+)
+
+logging.basicConfig(handlers=[handler], level=logging.INFO)
 
 frame_storage = FrameStorage(buffer_size=100)
 
 detection = Detection()
 
 mqtt = MQTTClient(
-    broker_address=os.getenv("MQTT_URL", "localhost"),
+    broker_address=os.getenv("MQTT_HOST", "localhost"),
     broker_port=int(os.getenv("MQTT_PORT", 1883)),
     keep_alive=60,
 )
@@ -137,6 +153,25 @@ def capture_and_store_frames(rtsp_url):
             logging.info("Released video capture. Reconnecting...")
 
 
+# FastAPI startup event
+@app.on_event("startup")
+def startup_event():
+    # Start the MQTT connection
+    try:
+        mqtt.connect()
+        # Once connected, the MQTT client's background loop will handle the connection.
+    except Exception as e:
+        logging.error(f"MQTT connection error: {e}")
+        exit(1)
+
+    rtsp_url = get_rtsp_url()
+    logging.info(f"RTSP URL: {rtsp_url}")
+    logging.info("Starting background frame capturing...")
+    capture_thread = threading.Thread(target=capture_and_store_frames, args=(rtsp_url,))
+    capture_thread.daemon = True
+    capture_thread.start()
+
+
 @app.post("/ml")
 async def trigger_ml(request: dict):
     timestamp = request.get("timestamp", None)
@@ -152,18 +187,7 @@ async def trigger_ml(request: dict):
         return {"message": "ML processing complete."}
 
 
-def main():
-    rtsp_url = get_rtsp_url()
-    logging.info(f"RTSP URL: {rtsp_url}")
-    logging.info("Capturing frames and waiting for ML trigger.")
-
-    mqtt.connect()
-
-    # Start capturing frames in the background
-    capture_thread = threading.Thread(target=capture_and_store_frames, args=(rtsp_url,))
-    capture_thread.start()
-
-
 if __name__ == "__main__":
-    main()
+    rtsp_url = get_rtsp_url()
+    capture_and_store_frames(rtsp_url)
     uvicorn.run(app, host="localhost", port=9000)
