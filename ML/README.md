@@ -4,6 +4,7 @@
 
 - Python 3.9.6 or higher
 - pip
+- mqtt broker
 
 ## Setup
 
@@ -40,7 +41,7 @@
 ## Run
 
 ```bash
-python -m app.main
+uvicorn main:app --host localhost --port 9000
 ```
 
 ## After install additonal packages
