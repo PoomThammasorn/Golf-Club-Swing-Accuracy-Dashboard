@@ -41,7 +41,7 @@
 ## Run
 
 ```bash
-uvicorn main:app --host localhost --port 9000
+uvicorn main:app --host localhost --port 9000 --reload
 ```
 
 ## After install additonal packages
