@@ -36,15 +36,25 @@ def main(broker_ip):
 
     client.on_connect = on_connect
     client.on_publish = on_publish
-
-    client.connect(broker_ip, 1883, 60)
-    client.loop_start()
-
+    max_retries = 5
+    retry_count = 0
+    while retry_count < max_retries:
+        client.connect(broker_ip, 1883, 60)
+        client.loop_start()
+        if not client.is_connected():
+            retry_count += 1
+            logger.error("Failed to connect to broker. Retrying...")
+            continue
     try:
         while True:
-            sensor_data = read_sensor_data()
-            client.publish("sensor/data", json.dumps(sensor_data))
-            time.sleep(0.1)  # Adjust as needed
+            try:
+                sensor_data = read_sensor_data()
+                client.publish("sensor/data", json.dumps(sensor_data))
+                time.sleep(0.1)  # Adjust as needed
+            except OSError:
+                logger.error("Failed to read sensor data")
+                break
+
     except KeyboardInterrupt:
         logger.info("Exiting...")
     finally:
